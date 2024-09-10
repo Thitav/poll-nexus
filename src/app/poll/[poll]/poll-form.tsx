@@ -21,11 +21,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useUser } from "@/lib/getUser";
+// import { useUser } from "@/lib/getUser";
+import { useState } from "react";
+import { BChart } from "@/components/barchart";
 
 interface PollOption {
   id: string;
-  text: string;
+  name: string;
+  votes: number;
 }
 
 export default function PollForm({
@@ -36,8 +39,7 @@ export default function PollForm({
     voteAction: (optionId: string) => void;
   };
 }) {
-  const user = useUser();
-
+  const [voted, setVoted] = useState(false);
   const optionsId = pollOptions.map((option) => option.id);
 
   const FormSchema = z.object({
@@ -51,6 +53,7 @@ export default function PollForm({
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     voteAction(data.option);
+    setVoted(true);
   }
 
   return (
@@ -60,44 +63,54 @@ export default function PollForm({
         <CardDescription>Vote in the poll...</CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="w-2/3 space-y-6"
-          >
-            <FormField
-              control={form.control}
-              name="option"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      {pollOptions.map((option, index) => (
-                        <FormItem
-                          className="flex items-center space-x-3 space-y-0"
-                          key={index}
-                        >
-                          <FormControl>
-                            <RadioGroupItem value={option.id} />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            {option.text}
-                          </FormLabel>
-                        </FormItem>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit">Vote</Button>
-          </form>
-        </Form>
+        {voted ? (
+          <BChart
+            params={{
+              chartData: pollOptions.map((option) => {
+                return { option: option.name, votes: option.votes };
+              }),
+            }}
+          />
+        ) : (
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="w-2/3 space-y-6"
+            >
+              <FormField
+                control={form.control}
+                name="option"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        {pollOptions.map((option, index) => (
+                          <FormItem
+                            className="flex items-center space-x-3 space-y-0"
+                            key={index}
+                          >
+                            <FormControl>
+                              <RadioGroupItem value={option.id} />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {option.name}
+                            </FormLabel>
+                          </FormItem>
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Vote</Button>
+            </form>
+          </Form>
+        )}
       </CardContent>
     </Card>
   );

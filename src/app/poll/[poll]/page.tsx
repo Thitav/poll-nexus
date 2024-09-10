@@ -1,36 +1,32 @@
-import { getPollOptions, votePollOption } from "@/lib/firebase/firestore";
+import { pollGetOptions, pollVoteOption } from "@/lib/firebase/firestore";
 import { getAuthenticatedAppForUser } from "@/lib/firebase/serverApp";
 import { getFirestore } from "firebase/firestore";
 import PollForm from "./poll-form";
-import { useState } from "react";
-import { set } from "react-hook-form";
 
 export default async function PollPage({
   params: { poll },
 }: {
   params: { poll: string };
 }) {
-  const { firebaseServerApp } = await getAuthenticatedAppForUser();
+  const { firebaseServerApp, currentUser } = await getAuthenticatedAppForUser();
   const db = getFirestore(firebaseServerApp);
 
-  const pollOptions = await getPollOptions(db, poll);
+  const pollOptions = await pollGetOptions(db, poll);
 
   async function voteAction(optionId: string) {
     "use server";
-    const { firebaseServerApp } = await getAuthenticatedAppForUser();
+    const { firebaseServerApp, currentUser } =
+      await getAuthenticatedAppForUser();
     const db = getFirestore(firebaseServerApp);
 
-    await votePollOption(db, poll, optionId);
+    await pollVoteOption(db, poll, optionId, currentUser!);
   }
 
   return (
     <div>
       <PollForm
         params={{
-          pollOptions: pollOptions.map((option) => ({
-            id: option.id,
-            text: option.name,
-          })),
+          pollOptions,
           voteAction,
         }}
       />
